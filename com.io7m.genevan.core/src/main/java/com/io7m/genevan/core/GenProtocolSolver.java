@@ -290,7 +290,7 @@ public final class GenProtocolSolver<
 
   private static <C extends GenProtocolClientHandlerType>
   Map<String, ClientHandlersByName<C>> collectClientHandlers(
-    final Collection<C> clientSupports)
+    final Collection<? extends C> clientSupports)
   {
     final var collected = new HashMap<String, ClientHandlersByName<C>>();
 
@@ -322,7 +322,7 @@ public final class GenProtocolSolver<
 
   private static <S extends GenProtocolServerEndpointType>
   Map<String, ServerEndpointsByName<S>> collectServerEndpoints(
-    final Collection<S> serverProvides)
+    final Collection<? extends S> serverProvides)
   {
     final var collected = new HashMap<String, ServerEndpointsByName<S>>();
 
@@ -370,8 +370,8 @@ public final class GenProtocolSolver<
 
   @Override
   public GenProtocolSolved<C, S> solve(
-    final Collection<S> serverProvides,
-    final Collection<C> clientSupports,
+    final Collection<? extends S> serverProvides,
+    final Collection<? extends C> clientSupports,
     final List<String> preferProtocols)
     throws GenProtocolException
   {
