@@ -16,8 +16,10 @@
 
 package com.io7m.genevan.tests;
 
+import com.io7m.genevan.core.GenProtocolClientHandlerType;
 import com.io7m.genevan.core.GenProtocolException;
 import com.io7m.genevan.core.GenProtocolIdentifier;
+import com.io7m.genevan.core.GenProtocolServerEndpointType;
 import com.io7m.genevan.core.GenProtocolSolver;
 import com.io7m.genevan.core.GenProtocolSolverType;
 import com.io7m.genevan.core.GenProtocolVersion;
@@ -74,7 +76,8 @@ public final class GenProtocolSolverTest
     new GenProtocolIdentifier(PROTOCOL_B, new GenProtocolVersion(ONE, ONE));
   private static final GenProtocolIdentifier PROTOCOL_B_1_2 =
     new GenProtocolIdentifier(PROTOCOL_B, new GenProtocolVersion(ONE, TWO));
-  private GenProtocolSolverType solver;
+
+  private GenProtocolSolverType<GenProtocolClientHandlerType, GenProtocolServerEndpointType> solver;
 
   @Provide
   private static Arbitrary<GenProtocolIdentifier> arbitraryProtocol()

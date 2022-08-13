@@ -25,11 +25,16 @@ import java.util.Objects;
  *
  * @param clientHandler  The client handler that will be used
  * @param serverEndpoint The server endpoint that will be used
+ *
+ * @param <C> The type of client handlers
+ * @param <S> The type of server endpoints
  */
 
-public record GenProtocolSolved(
-  GenProtocolClientHandlerType clientHandler,
-  GenProtocolServerEndpointType serverEndpoint)
+public record GenProtocolSolved<
+  C extends GenProtocolClientHandlerType,
+  S extends GenProtocolServerEndpointType>(
+  C clientHandler,
+  S serverEndpoint)
 {
   /**
    * A solved version negotiation.

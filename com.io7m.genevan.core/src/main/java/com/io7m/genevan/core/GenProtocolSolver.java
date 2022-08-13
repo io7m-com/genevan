@@ -42,9 +42,15 @@ import static com.io7m.genevan.core.GenProtocolErrorCode.CLIENT_AND_SERVER_HAVE_
 
 /**
  * The default protocol solver.
+ *
+ * @param <C> The type of client handlers
+ * @param <S> The type of server endpoints
  */
 
-public final class GenProtocolSolver implements GenProtocolSolverType
+public final class GenProtocolSolver<
+  C extends GenProtocolClientHandlerType,
+  S extends GenProtocolServerEndpointType>
+  implements GenProtocolSolverType<C, S>
 {
   private final ResourceBundle resources;
 
@@ -56,50 +62,67 @@ public final class GenProtocolSolver implements GenProtocolSolverType
   }
 
   /**
+   * @param <C> The type of client handlers
+   * @param <S> The type of server endpoints
+   *
    * @return The default protocol solver using the system's default locale.
    */
 
-  public static GenProtocolSolverType create()
+  public static <
+    C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  GenProtocolSolverType<C, S> create()
   {
     return create(Locale.getDefault());
   }
 
   /**
    * @param locale The locale
+   * @param <C>    The type of client handlers
+   * @param <S>    The type of server endpoints
    *
    * @return The default protocol solver using the given locale.
    */
 
-  public static GenProtocolSolverType create(
-    final Locale locale)
+  public static <
+    C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  GenProtocolSolverType<C, S>
+  create(final Locale locale)
   {
     final var resources =
       ResourceBundle.getBundle(
         "com.io7m.genevan.core.Messages", locale);
 
-    return new GenProtocolSolver(resources);
+    return new GenProtocolSolver<>(resources);
   }
 
-  private static boolean hasCompatibleServerEndpoint(
-    final Set<GenProtocolServerEndpointType> serverEndpoints,
-    final GenProtocolClientHandlerType clientHandler)
+  private static <C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  boolean hasCompatibleServerEndpoint(
+    final Set<S> serverEndpoints,
+    final C clientHandler)
   {
     return serverEndpoints.stream()
       .anyMatch(s -> s.isCompatibleWith(clientHandler));
   }
 
-  private static boolean hasCompatibleClientHandler(
-    final Set<GenProtocolClientHandlerType> clientHandlers,
-    final GenProtocolServerEndpointType serverEndpoint)
+  private static <C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  boolean hasCompatibleClientHandler(
+    final Set<C> clientHandlers,
+    final S serverEndpoint)
   {
     return clientHandlers.stream()
       .anyMatch(s -> s.isCompatibleWith(serverEndpoint));
   }
 
-  private static Map<String, BestVersionForProtocol> collectBestVersions(
-    final Map<String, SupportedHandlersForProtocol> allProtocols)
+  private static <C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  Map<String, BestVersionForProtocol<C, S>> collectBestVersions(
+    final Map<String, SupportedHandlersForProtocol<C, S>> allProtocols)
   {
-    final Map<String, BestVersionForProtocol> bestVersions = new HashMap<>();
+    final Map<String, BestVersionForProtocol<C, S>> bestVersions = new HashMap<>();
 
     for (final var handlers : allProtocols.values()) {
       Preconditions.checkPrecondition(
@@ -121,8 +144,11 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     return bestVersions;
   }
 
-  private static BestVersionForProtocol findBestVersionOf(
-    final SupportedHandlersForProtocol handlers)
+  private static <
+    C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  BestVersionForProtocol<C, S> findBestVersionOf(
+    final SupportedHandlersForProtocol<C, S> handlers)
   {
     final var sortedClientHandlers =
       new ArrayList<>(handlers.clientHandlers);
@@ -145,7 +171,7 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     for (final var clientHandler : sortedClientHandlers) {
       for (final var serverHandler : sortedServerEndpoints) {
         if (clientHandler.isCompatibleWith(serverHandler)) {
-          return new BestVersionForProtocol(
+          return new BestVersionForProtocol<>(
             handlers.name,
             serverHandler,
             clientHandler
@@ -162,10 +188,13 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     throw new UnreachableCodeException();
   }
 
-  private static Map<String, SupportedHandlersForProtocol> collectSupportedProtocols(
-    final Map<String, HandlersForProtocol> allProtocols)
+  private static <
+    C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  Map<String, SupportedHandlersForProtocol<C, S>> collectSupportedProtocols(
+    final Map<String, HandlersForProtocol<C, S>> allProtocols)
   {
-    final Map<String, SupportedHandlersForProtocol> supported = new HashMap<>();
+    final Map<String, SupportedHandlersForProtocol<C, S>> supported = new HashMap<>();
 
     for (final var handlers : allProtocols.values()) {
       final var clientHandlers =
@@ -186,7 +215,7 @@ public final class GenProtocolSolver implements GenProtocolSolverType
 
       supported.put(
         handlers.name,
-        new SupportedHandlersForProtocol(
+        new SupportedHandlersForProtocol<C, S>(
           handlers.name, serverEndpoints, clientHandlers)
       );
     }
@@ -194,11 +223,13 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     return supported;
   }
 
-  private static Map<String, HandlersForProtocol> collectProtocols(
-    final Map<String, ServerEndpointsByName> serverEndpointsByName,
-    final Map<String, ClientHandlersByName> clientHandlersByName)
+  private static <C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  Map<String, HandlersForProtocol<C, S>> collectProtocols(
+    final Map<String, ServerEndpointsByName<S>> serverEndpointsByName,
+    final Map<String, ClientHandlersByName<C>> clientHandlersByName)
   {
-    final var collected = new HashMap<String, HandlersForProtocol>();
+    final var collected = new HashMap<String, HandlersForProtocol<C, S>>();
 
     for (final var serverEndpoints : serverEndpointsByName.values()) {
       final var protocolName = serverEndpoints.name;
@@ -206,13 +237,13 @@ public final class GenProtocolSolver implements GenProtocolSolverType
       final var clientHandlers =
         clientHandlersByName.getOrDefault(
           protocolName,
-          new ClientHandlersByName(protocolName, new HashSet<>())
+          new ClientHandlersByName<>(protocolName, new HashSet<>())
         );
 
       final var handlers =
         collected.getOrDefault(
           protocolName,
-          new HandlersForProtocol(
+          new HandlersForProtocol<>(
             protocolName,
             new HashSet<>(),
             new HashSet<>())
@@ -229,13 +260,13 @@ public final class GenProtocolSolver implements GenProtocolSolverType
       final var serverEndpoints =
         serverEndpointsByName.getOrDefault(
           protocolName,
-          new ServerEndpointsByName(protocolName, new HashSet<>())
+          new ServerEndpointsByName<>(protocolName, new HashSet<>())
         );
 
       final var handlers =
         collected.getOrDefault(
           protocolName,
-          new HandlersForProtocol(
+          new HandlersForProtocol<>(
             protocolName,
             new HashSet<>(),
             new HashSet<>())
@@ -257,10 +288,11 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     return collected;
   }
 
-  private static Map<String, ClientHandlersByName> collectClientHandlers(
-    final Collection<? extends GenProtocolClientHandlerType> clientSupports)
+  private static <C extends GenProtocolClientHandlerType>
+  Map<String, ClientHandlersByName<C>> collectClientHandlers(
+    final Collection<C> clientSupports)
   {
-    final var collected = new HashMap<String, ClientHandlersByName>();
+    final var collected = new HashMap<String, ClientHandlersByName<C>>();
 
     for (final var clientHandler : clientSupports) {
       final var supported =
@@ -269,7 +301,7 @@ public final class GenProtocolSolver implements GenProtocolSolverType
         supported.identifier();
       final var existing =
         collected.getOrDefault(
-          identifier, new ClientHandlersByName(identifier, new HashSet<>())
+          identifier, new ClientHandlersByName<>(identifier, new HashSet<>())
         );
 
       existing.clientHandlers.add(clientHandler);
@@ -288,10 +320,11 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     return collected;
   }
 
-  private static Map<String, ServerEndpointsByName> collectServerEndpoints(
-    final Collection<? extends GenProtocolServerEndpointType> serverProvides)
+  private static <S extends GenProtocolServerEndpointType>
+  Map<String, ServerEndpointsByName<S>> collectServerEndpoints(
+    final Collection<S> serverProvides)
   {
-    final var collected = new HashMap<String, ServerEndpointsByName>();
+    final var collected = new HashMap<String, ServerEndpointsByName<S>>();
 
     for (final var serverEndpoint : serverProvides) {
       final var supported =
@@ -300,7 +333,7 @@ public final class GenProtocolSolver implements GenProtocolSolverType
         supported.identifier();
       final var existing =
         collected.getOrDefault(
-          identifier, new ServerEndpointsByName(identifier, new HashSet<>())
+          identifier, new ServerEndpointsByName<>(identifier, new HashSet<>())
         );
 
       existing.serverEndpoints.add(serverEndpoint);
@@ -319,8 +352,10 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     return collected;
   }
 
-  private static Optional<BestVersionForProtocol> disambiguate(
-    final Map<String, BestVersionForProtocol> bestVersions,
+  private static <C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>
+  Optional<BestVersionForProtocol<C, S>> disambiguate(
+    final Map<String, BestVersionForProtocol<C, S>> bestVersions,
     final List<String> preferProtocols)
   {
     for (final var protocol : preferProtocols) {
@@ -334,9 +369,9 @@ public final class GenProtocolSolver implements GenProtocolSolverType
   }
 
   @Override
-  public GenProtocolSolved solve(
-    final Collection<? extends GenProtocolServerEndpointType> serverProvides,
-    final Collection<? extends GenProtocolClientHandlerType> clientSupports,
+  public GenProtocolSolved<C, S> solve(
+    final Collection<S> serverProvides,
+    final Collection<C> clientSupports,
     final List<String> preferProtocols)
     throws GenProtocolException
   {
@@ -358,21 +393,21 @@ public final class GenProtocolSolver implements GenProtocolSolverType
       );
     }
 
-    final Map<String, ServerEndpointsByName> serverEndpointsByName =
+    final Map<String, ServerEndpointsByName<S>> serverEndpointsByName =
       collectServerEndpoints(serverProvides);
-    final Map<String, ClientHandlersByName> clientHandlersByName =
+    final Map<String, ClientHandlersByName<C>> clientHandlersByName =
       collectClientHandlers(clientSupports);
 
-    final Map<String, HandlersForProtocol> allProtocols =
+    final Map<String, HandlersForProtocol<C, S>> allProtocols =
       collectProtocols(serverEndpointsByName, clientHandlersByName);
-    final Map<String, SupportedHandlersForProtocol> supportedProtocols =
+    final Map<String, SupportedHandlersForProtocol<C, S>> supportedProtocols =
       collectSupportedProtocols(allProtocols);
 
     if (supportedProtocols.isEmpty()) {
       throw this.errorNoProtocolsInCommon(serverProvides, clientSupports);
     }
 
-    final Map<String, BestVersionForProtocol> bestVersions =
+    final Map<String, BestVersionForProtocol<C, S>> bestVersions =
       collectBestVersions(supportedProtocols);
 
     if (bestVersions.size() == 1) {
@@ -381,17 +416,17 @@ public final class GenProtocolSolver implements GenProtocolSolverType
           .iterator()
           .next();
 
-      return new GenProtocolSolved(
+      return new GenProtocolSolved<>(
         version.clientHandler,
         version.serverEndpoint
       );
     }
 
-    final Optional<BestVersionForProtocol> disambiguated =
+    final Optional<BestVersionForProtocol<C, S>> disambiguated =
       disambiguate(bestVersions, preferProtocols);
 
     if (disambiguated.isPresent()) {
-      return new GenProtocolSolved(
+      return new GenProtocolSolved<>(
         disambiguated.get().clientHandler(),
         disambiguated.get().serverEndpoint()
       );
@@ -520,9 +555,9 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     );
   }
 
-  private record ServerEndpointsByName(
+  private record ServerEndpointsByName<S extends GenProtocolServerEndpointType>(
     String name,
-    Set<GenProtocolServerEndpointType> serverEndpoints)
+    Set<S> serverEndpoints)
   {
     private ServerEndpointsByName
     {
@@ -531,9 +566,9 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     }
   }
 
-  private record ClientHandlersByName(
+  private record ClientHandlersByName<C extends GenProtocolClientHandlerType>(
     String name,
-    Set<GenProtocolClientHandlerType> clientHandlers)
+    Set<C> clientHandlers)
   {
     private ClientHandlersByName
     {
@@ -542,10 +577,12 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     }
   }
 
-  private record HandlersForProtocol(
+  private record HandlersForProtocol<
+    C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>(
     String name,
-    Set<GenProtocolServerEndpointType> serverEndpoints,
-    Set<GenProtocolClientHandlerType> clientHandlers)
+    Set<S> serverEndpoints,
+    Set<C> clientHandlers)
   {
     private HandlersForProtocol
     {
@@ -555,10 +592,12 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     }
   }
 
-  private record SupportedHandlersForProtocol(
+  private record SupportedHandlersForProtocol<
+    C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>(
     String name,
-    Set<GenProtocolServerEndpointType> serverEndpoints,
-    Set<GenProtocolClientHandlerType> clientHandlers)
+    Set<S> serverEndpoints,
+    Set<C> clientHandlers)
   {
     private SupportedHandlersForProtocol
     {
@@ -590,10 +629,12 @@ public final class GenProtocolSolver implements GenProtocolSolverType
     }
   }
 
-  private record BestVersionForProtocol(
+  private record BestVersionForProtocol<
+    C extends GenProtocolClientHandlerType,
+    S extends GenProtocolServerEndpointType>(
     String name,
-    GenProtocolServerEndpointType serverEndpoint,
-    GenProtocolClientHandlerType clientHandler)
+    S serverEndpoint,
+    C clientHandler)
   {
     private BestVersionForProtocol
     {

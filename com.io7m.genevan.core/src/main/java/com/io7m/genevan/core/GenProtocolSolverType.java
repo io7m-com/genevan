@@ -22,9 +22,14 @@ import java.util.List;
 
 /**
  * The type of protocol solvers.
+ *
+ * @param <C> The type of client handlers
+ * @param <S> The type of server endpoints
  */
 
-public interface GenProtocolSolverType
+public interface GenProtocolSolverType<
+  C extends GenProtocolClientHandlerType,
+  S extends GenProtocolServerEndpointType>
 {
   /**
    * Pick the "best" possible handler for the given set of server protocols and
@@ -40,9 +45,9 @@ public interface GenProtocolSolverType
    * @throws GenProtocolException On errors
    */
 
-  GenProtocolSolved solve(
-    Collection<? extends GenProtocolServerEndpointType> serverProvides,
-    Collection<? extends GenProtocolClientHandlerType> clientSupports,
+  GenProtocolSolved<C, S> solve(
+    Collection<S> serverProvides,
+    Collection<C> clientSupports,
     List<String> preferProtocols)
     throws GenProtocolException;
 }
