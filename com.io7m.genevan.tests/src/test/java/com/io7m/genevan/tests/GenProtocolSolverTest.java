@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -41,7 +42,8 @@ import java.util.stream.Collectors;
 
 import static com.io7m.genevan.core.GenProtocolErrorCode.AMBIGUOUS_RESULT;
 import static com.io7m.genevan.core.GenProtocolErrorCode.CLIENT_AND_SERVER_HAVE_NOTHING_IN_COMMON;
-import static com.io7m.genevan.tests.GenProtocolHandlers.exact;
+import static com.io7m.genevan.tests.GenProtocolHandlers.exactClient;
+import static com.io7m.genevan.tests.GenProtocolHandlers.exactServer;
 import static java.math.BigInteger.ONE;
 import static java.math.BigInteger.TWO;
 import static java.math.BigInteger.ZERO;
@@ -56,12 +58,14 @@ public final class GenProtocolSolverTest
 {
   private static final Logger LOG =
     LoggerFactory.getLogger(GenProtocolSolverTest.class);
+
   private static final String PROTOCOL_A = "com.io7m.a";
   private static final String PROTOCOL_B = "com.io7m.b";
   private static final String PROTOCOL_X = "com.io7m.x";
   private static final String PROTOCOL_Y = "com.io7m.y";
   private static final String PROTOCOL_Z = "com.io7m.z";
   private static final String PROTOCOL_W = "com.io7m.w";
+
   private static final GenProtocolIdentifier PROTOCOL_A_1_0 =
     new GenProtocolIdentifier(PROTOCOL_A, new GenProtocolVersion(ONE, ZERO));
   private static final GenProtocolIdentifier PROTOCOL_B_1_0 =
@@ -116,7 +120,7 @@ public final class GenProtocolSolverTest
       assertThrows(GenProtocolException.class, () -> {
         this.solver.solve(
           Set.of(),
-          Set.of(exact(PROTOCOL_A_1_0)),
+          Set.of(exactClient(PROTOCOL_A_1_0)),
           List.of()
         );
       });
@@ -133,7 +137,7 @@ public final class GenProtocolSolverTest
     final var ex =
       assertThrows(GenProtocolException.class, () -> {
         this.solver.solve(
-          Set.of(PROTOCOL_A_1_0),
+          Set.of(exactServer(PROTOCOL_A_1_0)),
           Set.of(),
           List.of()
         );
@@ -152,17 +156,20 @@ public final class GenProtocolSolverTest
   public void testServerClientOneExact()
     throws Exception
   {
-    final var handler =
-      exact(PROTOCOL_A_1_0);
+    final var clientHandler =
+      exactClient(PROTOCOL_A_1_0);
+    final var serverEndpoint =
+      exactServer(PROTOCOL_A_1_0);
 
     final var result =
       this.solver.solve(
-        Set.of(PROTOCOL_A_1_0),
-        Set.of(handler),
+        Set.of(serverEndpoint),
+        Set.of(clientHandler),
         List.of()
       );
 
-    assertEquals(handler, result);
+    assertEquals(clientHandler, result.clientHandler());
+    assertEquals(serverEndpoint, result.serverEndpoint());
   }
 
   /**
@@ -179,16 +186,20 @@ public final class GenProtocolSolverTest
   {
     this.solver = GenProtocolSolver.create();
 
-    final var handler = exact(p);
+    final var server =
+      exactServer(p);
+    final var client =
+      exactClient(p);
 
     final var result =
       this.solver.solve(
-        Set.of(p),
-        Set.of(handler),
+        Set.of(server),
+        Set.of(client),
         List.of()
       );
 
-    assertEquals(handler, result);
+    assertEquals(client, result.clientHandler());
+    assertEquals(server, result.serverEndpoint());
   }
 
   /**
@@ -202,17 +213,23 @@ public final class GenProtocolSolverTest
   public void testServerClientAmbiguous()
     throws Exception
   {
-    final var handlers =
+    final var clients =
       Set.of(
-        exact(PROTOCOL_A_1_0),
-        exact(PROTOCOL_B_1_0)
+        exactClient(PROTOCOL_A_1_0),
+        exactClient(PROTOCOL_B_1_0)
+      );
+
+    final var servers =
+      Set.of(
+        exactServer(PROTOCOL_A_1_0),
+        exactServer(PROTOCOL_B_1_0)
       );
 
     final var ex =
       assertThrows(GenProtocolException.class, () -> {
         this.solver.solve(
-          Set.of(PROTOCOL_A_1_0, PROTOCOL_B_1_0),
-          handlers,
+          servers,
+          clients,
           List.of()
         );
       });
@@ -222,7 +239,7 @@ public final class GenProtocolSolverTest
 
   /**
    * If the client supports everything the server provides, assuming the server
-   * provides more than one thing, a client that supports all of the same
+   * provides more than one thing, a client that supports all the same
    * protocols cannot disambiguate without preferences.
    *
    * @throws Exception On errors
@@ -230,21 +247,38 @@ public final class GenProtocolSolverTest
 
   @Property
   public void testServerClientAmbiguousP(
-    final @ForAll("arbitraryProtocols") @Size(min = 2) Set<GenProtocolIdentifier> serverSupports)
+    final @ForAll("arbitraryProtocols") @Size(min = 2) Set<GenProtocolIdentifier> serverSupportsIn)
     throws Exception
   {
     this.solver = GenProtocolSolver.create();
 
-    final var handlers =
+    /*
+     * We need to add an extra protocol because there's no guarantee
+     * that the generated serverSupportsIn set will actually contain
+     * different protocol names (and therefore, ambiguity!).
+     */
+
+    final var serverSupports = new HashSet<>(serverSupportsIn);
+    serverSupports.add(new GenProtocolIdentifier(
+      "EXTRA!",
+      new GenProtocolVersion(ONE, ZERO)
+    ));
+
+    final var serverEndpoints =
       serverSupports.stream()
-        .map(GenProtocolHandlers::exact)
+        .map(GenProtocolHandlers::exactServer)
+        .collect(Collectors.toUnmodifiableSet());
+
+    final var clientHandlers =
+      serverSupports.stream()
+        .map(GenProtocolHandlers::exactClient)
         .collect(Collectors.toUnmodifiableSet());
 
     final var ex =
       assertThrows(GenProtocolException.class, () -> {
         final var r = this.solver.solve(
-          serverSupports,
-          handlers,
+          serverEndpoints,
+          clientHandlers,
           List.of()
         );
         LOG.debug("r: {}", r);
@@ -263,17 +297,23 @@ public final class GenProtocolSolverTest
   public void testServerClientAmbiguousUselessPreferences()
     throws Exception
   {
-    final var handlers =
+    final var clientHandlers =
       Set.of(
-        exact(PROTOCOL_A_1_0),
-        exact(PROTOCOL_B_1_0)
+        exactClient(PROTOCOL_A_1_0),
+        exactClient(PROTOCOL_B_1_0)
+      );
+
+    final var serverEndpoints =
+      Set.of(
+        exactServer(PROTOCOL_A_1_0),
+        exactServer(PROTOCOL_B_1_0)
       );
 
     final var ex =
       assertThrows(GenProtocolException.class, () -> {
         this.solver.solve(
-          Set.of(PROTOCOL_A_1_0, PROTOCOL_B_1_0),
-          handlers,
+          serverEndpoints,
+          clientHandlers,
           List.of(PROTOCOL_X, PROTOCOL_Y, PROTOCOL_Z, PROTOCOL_W)
         );
       });
@@ -292,16 +332,21 @@ public final class GenProtocolSolverTest
   public void testServerClientNoCommon0()
     throws Exception
   {
-    final var handlers =
+    final var clientHandlers =
       Set.of(
-        exact(PROTOCOL_A_1_0)
+        exactClient(PROTOCOL_A_1_0)
+      );
+
+    final var serverEndpoints =
+      Set.of(
+        exactServer(PROTOCOL_B_1_0)
       );
 
     final var ex =
       assertThrows(GenProtocolException.class, () -> {
         this.solver.solve(
-          Set.of(PROTOCOL_B_1_0),
-          handlers,
+          serverEndpoints,
+          clientHandlers,
           List.of()
         );
       });
@@ -319,21 +364,28 @@ public final class GenProtocolSolverTest
   public void testServerClientObvious0()
     throws Exception
   {
-    final var handlers =
+    final var clientHandlers =
       Set.of(
-        exact(PROTOCOL_B_1_0),
-        exact(PROTOCOL_B_1_1),
-        exact(PROTOCOL_B_1_2)
+        exactClient(PROTOCOL_B_1_0),
+        exactClient(PROTOCOL_B_1_1),
+        exactClient(PROTOCOL_B_1_2)
+      );
+
+    final var serverEndpoints =
+      Set.of(
+        exactServer(PROTOCOL_A_1_0),
+        exactServer(PROTOCOL_B_1_0)
       );
 
     final var result =
       this.solver.solve(
-        Set.of(PROTOCOL_A_1_0, PROTOCOL_B_1_0),
-        handlers,
+        serverEndpoints,
+        clientHandlers,
         List.of()
       );
 
-    assertEquals(exact(PROTOCOL_B_1_2), result);
+    assertEquals(exactClient(PROTOCOL_B_1_2), result.clientHandler());
+    assertEquals(exactServer(PROTOCOL_B_1_0), result.serverEndpoint());
   }
 
   /**
@@ -347,20 +399,27 @@ public final class GenProtocolSolverTest
   public void testServerClientAmbiguousPreferred()
     throws Exception
   {
-    final var handlers =
+    final var clientHandlers =
       Set.of(
-        exact(PROTOCOL_A_1_0),
-        exact(PROTOCOL_B_1_0)
+        exactClient(PROTOCOL_A_1_0),
+        exactClient(PROTOCOL_B_1_0)
+      );
+
+    final var serverEndpoints =
+      Set.of(
+        exactServer(PROTOCOL_A_1_0),
+        exactServer(PROTOCOL_B_1_0)
       );
 
     final var result =
       this.solver.solve(
-        Set.of(PROTOCOL_A_1_0, PROTOCOL_B_1_0),
-        handlers,
+        serverEndpoints,
+        clientHandlers,
         List.of(PROTOCOL_B)
       );
 
-    assertEquals(exact(PROTOCOL_B_1_0), result);
+    assertEquals(exactClient(PROTOCOL_B_1_0), result.clientHandler());
+    assertEquals(exactServer(PROTOCOL_B_1_0), result.serverEndpoint());
   }
 
   /**
@@ -373,10 +432,22 @@ public final class GenProtocolSolverTest
 
   @Property
   public void testServerClientAmbiguousPreferredP(
-    final @ForAll("arbitraryProtocols") @Size(min = 2) Set<GenProtocolIdentifier> serverSupports)
+    final @ForAll("arbitraryProtocols") @Size(min = 2) Set<GenProtocolIdentifier> serverSupportsIn)
     throws Exception
   {
     this.solver = GenProtocolSolver.create();
+
+    /*
+     * We need to add an extra protocol because there's no guarantee
+     * that the generated serverSupportsIn set will actually contain
+     * different protocol names (and therefore, ambiguity!).
+     */
+
+    final var serverSupports = new HashSet<>(serverSupportsIn);
+    serverSupports.add(new GenProtocolIdentifier(
+      "EXTRA!",
+      new GenProtocolVersion(ONE, ZERO)
+    ));
 
     /*
      * Pick an arbitrary protocol name from the set.
@@ -397,22 +468,27 @@ public final class GenProtocolSolverTest
       serverSupports.stream()
         .filter(p -> Objects.equals(p.identifier(), preferred))
         .max(Comparator.comparing(GenProtocolIdentifier::version))
-        .map(GenProtocolHandlers::exact)
+        .map(GenProtocolHandlers::exactClient)
         .orElseThrow();
 
-    final var handlers =
+    final var serverEndpoints =
       serverSupports.stream()
-        .map(GenProtocolHandlers::exact)
+        .map(GenProtocolHandlers::exactServer)
+        .collect(Collectors.toUnmodifiableSet());
+
+    final var clientHandlers =
+      serverSupports.stream()
+        .map(GenProtocolHandlers::exactClient)
         .collect(Collectors.toUnmodifiableSet());
 
     final var result =
       this.solver.solve(
-        serverSupports,
-        handlers,
+        serverEndpoints,
+        clientHandlers,
         List.of(preferred)
       );
 
-    assertEquals(expected, result);
+    assertEquals(expected, result.clientHandler());
   }
 
   /**
@@ -426,19 +502,26 @@ public final class GenProtocolSolverTest
   public void testServerClientAmbiguousPreferredExtras()
     throws Exception
   {
-    final var handlers =
+    final var clientHandlers =
       Set.of(
-        exact(PROTOCOL_A_1_0),
-        exact(PROTOCOL_B_1_0)
+        exactClient(PROTOCOL_A_1_0),
+        exactClient(PROTOCOL_B_1_0)
+      );
+
+    final var serverEndpoints =
+      Set.of(
+        exactServer(PROTOCOL_A_1_0),
+        exactServer(PROTOCOL_B_1_0)
       );
 
     final var result =
       this.solver.solve(
-        Set.of(PROTOCOL_A_1_0, PROTOCOL_B_1_0),
-        handlers,
+        serverEndpoints,
+        clientHandlers,
         List.of(PROTOCOL_X, PROTOCOL_Y, PROTOCOL_Z, PROTOCOL_B, PROTOCOL_W)
       );
 
-    assertEquals(exact(PROTOCOL_B_1_0), result);
+    assertEquals(exactClient(PROTOCOL_B_1_0), result.clientHandler());
+    assertEquals(exactServer(PROTOCOL_B_1_0), result.serverEndpoint());
   }
 }

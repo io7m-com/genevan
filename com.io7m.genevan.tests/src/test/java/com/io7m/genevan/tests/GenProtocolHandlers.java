@@ -16,8 +16,9 @@
 
 package com.io7m.genevan.tests;
 
-import com.io7m.genevan.core.GenProtocolHandlerType;
+import com.io7m.genevan.core.GenProtocolClientHandlerType;
 import com.io7m.genevan.core.GenProtocolIdentifier;
+import com.io7m.genevan.core.GenProtocolServerEndpointType;
 import com.io7m.genevan.core.GenProtocolVersion;
 
 import java.math.BigInteger;
@@ -38,33 +39,62 @@ public final class GenProtocolHandlers
    * @return A handler with the exact identifier
    */
 
-  public static GenProtocolHandlerType exact(
+  public static GenProtocolClientHandlerType exactClient(
     final GenProtocolIdentifier identifier)
   {
-    return new Exact(identifier);
+    return new ExactClient(identifier);
   }
 
   /**
    * @return A handler with the exact identifier values
    */
 
-  public static GenProtocolHandlerType exact(
+  public static GenProtocolClientHandlerType exactClient(
     final String id,
     final int major,
     final int minor)
   {
-    return new Exact(new GenProtocolIdentifier(id,
-                                               new GenProtocolVersion(BigInteger.valueOf(
-                                                 (long) major),
-                                                                      BigInteger.valueOf(
-                                                                        (long) minor))));
+    final var version =
+      new GenProtocolVersion(
+        BigInteger.valueOf((long) major),
+        BigInteger.valueOf((long) minor)
+      );
+    return new ExactClient(new GenProtocolIdentifier(id, version));
   }
 
-  private static final class Exact implements GenProtocolHandlerType
+  /**
+   * @return A handler with the exact identifier
+   */
+
+  public static GenProtocolServerEndpointType exactServer(
+    final GenProtocolIdentifier identifier)
+  {
+    return new ExactServer(identifier);
+  }
+
+  /**
+   * @return A handler with the exact identifier values
+   */
+
+  public static GenProtocolServerEndpointType exactServer(
+    final String id,
+    final int major,
+    final int minor)
+  {
+    final var version =
+      new GenProtocolVersion(
+        BigInteger.valueOf((long) major),
+        BigInteger.valueOf((long) minor)
+      );
+    return new ExactServer(new GenProtocolIdentifier(id, version));
+  }
+
+  private static final class ExactClient
+    implements GenProtocolClientHandlerType
   {
     private final GenProtocolIdentifier supports;
 
-    Exact(
+    ExactClient(
       final GenProtocolIdentifier inSupports)
     {
       this.supports = Objects.requireNonNull(inSupports, "supports");
@@ -79,7 +109,7 @@ public final class GenProtocolHandlers
       if (o == null || !this.getClass().equals(o.getClass())) {
         return false;
       }
-      final Exact exact = (Exact) o;
+      final ExactClient exact = (ExactClient) o;
       return this.supports.equals(exact.supports);
     }
 
@@ -92,7 +122,50 @@ public final class GenProtocolHandlers
     @Override
     public String toString()
     {
-      return "[Exact %s]".formatted(this.supports);
+      return "[ExactClient %s]".formatted(this.supports);
+    }
+
+    @Override
+    public GenProtocolIdentifier supported()
+    {
+      return this.supports;
+    }
+  }
+
+  private static final class ExactServer
+    implements GenProtocolServerEndpointType
+  {
+    private final GenProtocolIdentifier supports;
+
+    ExactServer(
+      final GenProtocolIdentifier inSupports)
+    {
+      this.supports = Objects.requireNonNull(inSupports, "supports");
+    }
+
+    @Override
+    public boolean equals(final Object o)
+    {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || !this.getClass().equals(o.getClass())) {
+        return false;
+      }
+      final ExactServer exact = (ExactServer) o;
+      return this.supports.equals(exact.supports);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(this.supports);
+    }
+
+    @Override
+    public String toString()
+    {
+      return "[ExactServer %s]".formatted(this.supports);
     }
 
     @Override

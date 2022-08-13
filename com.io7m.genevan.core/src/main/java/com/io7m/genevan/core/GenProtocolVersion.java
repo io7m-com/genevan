@@ -56,6 +56,19 @@ public record GenProtocolVersion(
     }
   }
 
+  /**
+   * @param other The other version
+   *
+   * @return {@code true} if this version is compatible with the other version
+   */
+
+  public boolean isCompatibleWith(
+    final GenProtocolVersion other)
+  {
+    Objects.requireNonNull(other, "other");
+    return Objects.equals(this.versionMajor, other.versionMajor);
+  }
+
   @Override
   public int compareTo(
     final GenProtocolVersion other)

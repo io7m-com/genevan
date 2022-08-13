@@ -17,32 +17,33 @@
 
 package com.io7m.genevan.core;
 
-import java.util.Collection;
-import java.util.List;
-
 /**
- * The type of protocol solvers.
+ * A handler that supports a given protocol.
  */
 
-public interface GenProtocolSolverType
+public interface GenProtocolClientHandlerType
 {
   /**
-   * Pick the "best" possible handler for the given set of server protocols and
-   * client handlers.
+   * The protocol the handler supports. The
+   * {@link GenProtocolIdentifier#version()} is interpreted to be the
+   * <i>maximum</i> minor version supported by the handler when this is useful
+   * to disambiguate between two handlers that support the same major version of
+   * the same protocol.
    *
-   * @param serverProvides  The versions supported by the server
-   * @param clientSupports  The protocol versions supported by the client
-   * @param preferProtocols The protocol names to prefer in the case of
-   *                        ambiguity
-   *
-   * @return The best possible handler
-   *
-   * @throws GenProtocolException On errors
+   * @return The supported protocol
    */
 
-  GenProtocolSolved solve(
-    Collection<GenProtocolServerEndpointType> serverProvides,
-    Collection<GenProtocolClientHandlerType> clientSupports,
-    List<String> preferProtocols)
-    throws GenProtocolException;
+  GenProtocolIdentifier supported();
+
+  /**
+   * @param endpoint The endpoint
+   *
+   * @return {@code true} if this handler is compatible with the given endpoint
+   */
+
+  default boolean isCompatibleWith(
+    final GenProtocolServerEndpointType endpoint)
+  {
+    return this.supported().isCompatibleWith(endpoint.supported());
+  }
 }

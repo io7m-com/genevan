@@ -41,4 +41,17 @@ public record GenProtocolIdentifier(
     Objects.requireNonNull(identifier, "identifier");
     Objects.requireNonNull(version, "version");
   }
+
+  /**
+   * @param other The other version
+   *
+   * @return {@code true} if this protocol is compatible with the other protocol
+   */
+
+  public boolean isCompatibleWith(
+    final GenProtocolIdentifier other)
+  {
+    return Objects.equals(this.identifier, other.identifier)
+           && this.version.isCompatibleWith(other.version);
+  }
 }

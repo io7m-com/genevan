@@ -18,20 +18,27 @@
 package com.io7m.genevan.core;
 
 /**
- * A handler that supports a given protocol.
+ * A server endpoint that supports a given protocol.
  */
 
-public interface GenProtocolHandlerType
+public interface GenProtocolServerEndpointType
 {
   /**
-   * The protocol the handler supports. The
-   * {@link GenProtocolIdentifier#versionMinor()} is interpreted to be the
-   * <i>maximum</i> minor version supported by the handler when this is useful
-   * to disambiguate between two handlers that support the same major version of
-   * the same protocol.
+   * The protocol the endpoint supports.
    *
    * @return The supported protocol
    */
 
   GenProtocolIdentifier supported();
+
+  /**
+   * @param handler The handler
+   * @return {@code true} if this endpoint is compatible with the given handler
+   */
+
+  default boolean isCompatibleWith(
+    final GenProtocolClientHandlerType handler)
+  {
+    return this.supported().isCompatibleWith(handler.supported());
+  }
 }
