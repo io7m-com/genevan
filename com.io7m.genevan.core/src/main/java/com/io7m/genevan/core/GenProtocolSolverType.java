@@ -41,8 +41,8 @@ public interface GenProtocolSolverType
    */
 
   GenProtocolSolved solve(
-    Collection<GenProtocolServerEndpointType> serverProvides,
-    Collection<GenProtocolClientHandlerType> clientSupports,
+    Collection<? extends GenProtocolServerEndpointType> serverProvides,
+    Collection<? extends GenProtocolClientHandlerType> clientSupports,
     List<String> preferProtocols)
     throws GenProtocolException;
 }

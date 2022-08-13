@@ -258,7 +258,7 @@ public final class GenProtocolSolver implements GenProtocolSolverType
   }
 
   private static Map<String, ClientHandlersByName> collectClientHandlers(
-    final Collection<GenProtocolClientHandlerType> clientSupports)
+    final Collection<? extends GenProtocolClientHandlerType> clientSupports)
   {
     final var collected = new HashMap<String, ClientHandlersByName>();
 
@@ -289,7 +289,7 @@ public final class GenProtocolSolver implements GenProtocolSolverType
   }
 
   private static Map<String, ServerEndpointsByName> collectServerEndpoints(
-    final Collection<GenProtocolServerEndpointType> serverProvides)
+    final Collection<? extends GenProtocolServerEndpointType> serverProvides)
   {
     final var collected = new HashMap<String, ServerEndpointsByName>();
 
@@ -335,8 +335,8 @@ public final class GenProtocolSolver implements GenProtocolSolverType
 
   @Override
   public GenProtocolSolved solve(
-    final Collection<GenProtocolServerEndpointType> serverProvides,
-    final Collection<GenProtocolClientHandlerType> clientSupports,
+    final Collection<? extends GenProtocolServerEndpointType> serverProvides,
+    final Collection<? extends GenProtocolClientHandlerType> clientSupports,
     final List<String> preferProtocols)
     throws GenProtocolException
   {
@@ -412,8 +412,8 @@ public final class GenProtocolSolver implements GenProtocolSolverType
   }
 
   private GenProtocolException errorNoProtocolsInCommon(
-    final Collection<GenProtocolServerEndpointType> serverProvides,
-    final Collection<GenProtocolClientHandlerType> clientSupports)
+    final Collection<? extends GenProtocolServerEndpointType> serverProvides,
+    final Collection<? extends GenProtocolClientHandlerType> clientSupports)
   {
     final var lineSeparator = System.lineSeparator();
     final var text = new StringBuilder(128);
@@ -457,8 +457,8 @@ public final class GenProtocolSolver implements GenProtocolSolverType
   }
 
   private GenProtocolException errorAmbiguous(
-    final Collection<GenProtocolServerEndpointType> serverProvides,
-    final Collection<GenProtocolClientHandlerType> clientSupports,
+    final Collection<? extends GenProtocolServerEndpointType> serverProvides,
+    final Collection<? extends GenProtocolClientHandlerType> clientSupports,
     final List<String> preferProtocols)
   {
     final var lineSeparator = System.lineSeparator();
