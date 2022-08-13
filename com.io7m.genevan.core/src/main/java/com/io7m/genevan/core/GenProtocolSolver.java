@@ -90,6 +90,8 @@ public final class GenProtocolSolver<
   GenProtocolSolverType<C, S>
   create(final Locale locale)
   {
+    Objects.requireNonNull(locale, "locale");
+
     try {
       return new GenProtocolSolver<>(new GenProtocolStrings(locale));
     } catch (final IOException e) {
