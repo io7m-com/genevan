@@ -22,7 +22,8 @@ import com.io7m.jaffirm.core.Postconditions;
 import com.io7m.jaffirm.core.Preconditions;
 import com.io7m.junreachable.UnreachableCodeException;
 
-import java.text.MessageFormat;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -33,7 +34,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,13 +52,13 @@ public final class GenProtocolSolver<
   S extends GenProtocolServerEndpointType>
   implements GenProtocolSolverType<C, S>
 {
-  private final ResourceBundle resources;
+  private final GenProtocolStrings strings;
 
   private GenProtocolSolver(
-    final ResourceBundle inResources)
+    final GenProtocolStrings inStrings)
   {
-    this.resources =
-      Objects.requireNonNull(inResources, "resources");
+    this.strings =
+      Objects.requireNonNull(inStrings, "strings");
   }
 
   /**
@@ -90,11 +90,11 @@ public final class GenProtocolSolver<
   GenProtocolSolverType<C, S>
   create(final Locale locale)
   {
-    final var resources =
-      ResourceBundle.getBundle(
-        "com.io7m.genevan.core.Messages", locale);
-
-    return new GenProtocolSolver<>(resources);
+    try {
+      return new GenProtocolSolver<>(new GenProtocolStrings(locale));
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private static <C extends GenProtocolClientHandlerType,
@@ -382,14 +382,14 @@ public final class GenProtocolSolver<
     if (serverProvides.isEmpty()) {
       throw new GenProtocolException(
         CLIENT_AND_SERVER_HAVE_NOTHING_IN_COMMON,
-        this.format("errorServerSupportsNothing")
+        this.strings.format("errorServerSupportsNothing")
       );
     }
 
     if (clientSupports.isEmpty()) {
       throw new GenProtocolException(
         CLIENT_AND_SERVER_HAVE_NOTHING_IN_COMMON,
-        this.format("errorClientSupportsNothing")
+        this.strings.format("errorClientSupportsNothing")
       );
     }
 
@@ -439,24 +439,17 @@ public final class GenProtocolSolver<
     );
   }
 
-  private String format(
-    final String id,
-    final Object... args)
-  {
-    return MessageFormat.format(this.resources.getString(id), args);
-  }
-
   private GenProtocolException errorNoProtocolsInCommon(
     final Collection<? extends GenProtocolServerEndpointType> serverProvides,
     final Collection<? extends GenProtocolClientHandlerType> clientSupports)
   {
     final var lineSeparator = System.lineSeparator();
     final var text = new StringBuilder(128);
-    text.append(this.format("errorNoSupportedVersions"));
+    text.append(this.strings.format("errorNoSupportedVersions"));
     text.append(lineSeparator);
     text.append(lineSeparator);
 
-    text.append(this.format("serverSupports"));
+    text.append(this.strings.format("serverSupports"));
     text.append(lineSeparator);
 
     for (final var candidate : serverProvides) {
@@ -471,7 +464,7 @@ public final class GenProtocolSolver<
     }
     text.append(lineSeparator);
 
-    text.append(this.format("clientSupports"));
+    text.append(this.strings.format("clientSupports"));
     text.append(lineSeparator);
 
     for (final var handler : clientSupports) {
@@ -498,11 +491,11 @@ public final class GenProtocolSolver<
   {
     final var lineSeparator = System.lineSeparator();
     final var text = new StringBuilder(128);
-    text.append(this.format("errorAmbiguousProtocols"));
+    text.append(this.strings.format("errorAmbiguousProtocols"));
     text.append(lineSeparator);
     text.append(lineSeparator);
 
-    text.append(this.format("serverSupports"));
+    text.append(this.strings.format("serverSupports"));
     text.append(lineSeparator);
 
     for (final var candidate : serverProvides) {
@@ -517,7 +510,7 @@ public final class GenProtocolSolver<
     }
     text.append(lineSeparator);
 
-    text.append(this.format("clientSupports"));
+    text.append(this.strings.format("clientSupports"));
     text.append(lineSeparator);
 
     for (final var handler : clientSupports) {
@@ -533,21 +526,20 @@ public final class GenProtocolSolver<
     text.append(lineSeparator);
 
     if (!preferProtocols.isEmpty()) {
-      text.append(this.format("clientPrefers", preferProtocols));
+      text.append(this.strings.format("clientPrefers", preferProtocols));
       text.append(lineSeparator);
     } else {
-      text.append(this.format("clientPrefersNone"));
+      text.append(this.strings.format("clientPrefersNone"));
       text.append(lineSeparator);
     }
 
     text.append(lineSeparator);
-    text.append(this.format(
+    text.append(this.strings.format(
       "clientPreferSuggest",
       serverProvides.stream()
         .map(GenProtocolServerEndpointType::supported)
         .map(GenProtocolIdentifier::identifier)
-        .toList()
-    ));
+        .toList()));
 
     return new GenProtocolException(
       AMBIGUOUS_RESULT,

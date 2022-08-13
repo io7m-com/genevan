@@ -14,20 +14,32 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+
+package com.io7m.genevan.core;
+
+import com.io7m.jxtrand.vanilla.JXTAbstractStrings;
+
+import java.io.IOException;
+import java.util.Locale;
+
 /**
- * Generic protocol version negotiation (Core)
+ * String resources.
  */
 
-module com.io7m.genevan.core
+public final class GenProtocolStrings extends JXTAbstractStrings
 {
-  requires static org.osgi.annotation.bundle;
-  requires static org.osgi.annotation.versioning;
+  /**
+   * String resources.
+   */
 
-  requires com.io7m.jaffirm.core;
-  requires com.io7m.junreachable.core;
-  requires com.io7m.jxtrand.vanilla;
-
-  opens com.io7m.genevan.core to com.io7m.jxtrand.vanilla;
-
-  exports com.io7m.genevan.core;
+  GenProtocolStrings(
+    final Locale locale)
+    throws IOException
+  {
+    super(
+      locale,
+      GenProtocolStrings.class,
+      "/com/io7m/genevan/core",
+      "Messages");
+  }
 }
