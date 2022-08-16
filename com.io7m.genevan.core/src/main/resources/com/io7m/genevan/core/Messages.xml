@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+
+<properties>
+  <entry key="errorServerSupportsNothing">The set of protocols supported by the server is empty.</entry>
+  <entry key="errorClientSupportsNothing">The set of protocols supported by the client is empty.</entry>
+  <entry key="errorAmbiguousProtocols"><![CDATA[Version negotiation resulted in an ambiguity; it is not
+possible to select a "best" protocol from the provided options without specifying
+more appropriate preferences.
+]]></entry>
+  <entry key="errorNoSupportedVersions">The server and client do not have a supported protocol in common.</entry>
+  <entry key="serverSupports">The server claims to support the following protocols:</entry>
+  <entry key="clientSupports">The client claims to support the following protocols:</entry>
+  <entry key="clientPrefersNone">The client does not specify any preferred protocols.</entry>
+  <entry key="clientPreferSuggest">Specifying at least one of {0} as preferred protocols would eliminate the ambiguity.</entry>
+  <entry key="clientPrefers">The client prefers the following protocols: {0}</entry>
+</properties>
