@@ -5,13 +5,14 @@ Require Coq.FSets.FMapFacts.
 
 Require Genevan.ProtoIdentifier.
 Require Genevan.ProtoName.
-Require Genevan.ProtoPeer.
+Require Genevan.ProtoPeer.Peer.
+Require Genevan.ProtoPeer.Collection.
 
 Record t := {
   supports : ProtoIdentifier.t
 }.
 
-Module ClientHandlerPeer : ProtoPeer.T with Definition t := t.
+Module ClientHandlerPeer : Peer.T with Definition t := t.
   Definition t        := t.
   Definition eq       := @Logic.eq t.
   Definition eq_refl  := @Logic.eq_refl t.
@@ -45,4 +46,4 @@ Module Sets : FSetInterface.WS
 := FSetWeakList.Make ClientHandlerPeer.
 
 Module ClientHandlerCollection :=
-  ProtoPeer.Collection ClientHandlerPeer Sets.
+  ProtoPeer.Collection.Make ClientHandlerPeer Sets.

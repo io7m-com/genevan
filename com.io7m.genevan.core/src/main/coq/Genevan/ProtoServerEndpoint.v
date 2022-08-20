@@ -6,13 +6,14 @@ Require Coq.Lists.List.
 
 Require Genevan.ProtoIdentifier.
 Require Genevan.ProtoName.
-Require Genevan.ProtoPeer.
+Require Genevan.ProtoPeer.Peer.
+Require Genevan.ProtoPeer.Collection.
 
 Record t := {
   supports : ProtoIdentifier.t
 }.
 
-Module ServerEndpointPeer : ProtoPeer.T with Definition t := t.
+Module ServerEndpointPeer : Peer.T with Definition t := t.
   Definition t        := t.
   Definition eq       := @Logic.eq t.
   Definition eq_refl  := @Logic.eq_refl t.
@@ -45,4 +46,4 @@ Module Sets : FSetInterface.WS
 := FSetWeakList.Make ServerEndpointPeer.
 
 Module ServerEndpointCollection :=
-  ProtoPeer.Collection ServerEndpointPeer Sets.
+  ProtoPeer.Collection.Make ServerEndpointPeer Sets.
