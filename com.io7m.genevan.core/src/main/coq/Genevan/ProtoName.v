@@ -6,7 +6,13 @@ Require Coq.FSets.FMapFacts.
 Require Coq.Strings.String.
 Require Coq.Structures.OrderedTypeEx.
 
+(** * Protocol Name *)
+
+(** A protocol name is an arbitrary string. *)
+
 Definition t := String.string.
+
+(** Protocol names are lexicographically ordered. *)
 
 Module Ord : OrderedTypeEx.UsualOrderedType
   with Definition t  := String.string

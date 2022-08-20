@@ -3,10 +3,65 @@ Require Coq.Classes.RelationClasses.
 Require Coq.Arith.Compare_dec.
 Require Coq.Arith.PeanoNat.
 
+(** * Protocol Version *)
+
+(** A _protocol version_ encodes the version number of a _semantically-versioned_
+    protocol, consisting of a _major_ and _minor_ version. The _minor_ version
+    is incremented on compatible changes, and the _major_ version is
+    incremented on incompatible changes. *)
+
 Record t := {
   major : nat;
   minor : nat
 }.
+
+(** A protocol version _x_ is defined to be _compatible_ with a protocol
+    version _y_ if the major versions are equal. The basic assumption is that
+    any peer that supports major version _M_ of a protocol _P_ can speak to any
+    other peer that supports major version _M_ of _P_, regardless of the minor
+    version supported by either peer. *)
+
+Definition isCompatibleWith (x y : t) : Prop :=
+  (major x) = (major y).
+
+(** The _isCompatibleWith_ relation is reflexive. *)
+
+Theorem isCompatibleWith_reflexive : forall x, isCompatibleWith x x.
+Proof. intro x. apply eq_refl. Qed.
+
+(** The _isCompatibleWith_ relation is symmetric. *)
+
+Theorem isCompatibleWith_symmetric : forall x y,
+  isCompatibleWith x y -> isCompatibleWith y x.
+Proof.
+  intros x y Hxy.
+  apply eq_sym.
+  exact Hxy.
+Qed.
+
+(** The _isCompatibleWith_ relation is transitive. *)
+
+Theorem isCompatibleWith_transitive : forall x y z,
+  isCompatibleWith x y -> isCompatibleWith y z -> isCompatibleWith x z.
+Proof.
+  unfold isCompatibleWith.
+  intros x y z Hxy Hyz.
+  rewrite Hxy.
+  exact Hyz.
+Qed.
+
+(** The _isCompatibleWith_ relation is therefore an equivalence relation. *)
+
+#[local]
+Instance isCompatibleWith_Eq : RelationClasses.Equivalence isCompatibleWith.
+Proof.
+  constructor.
+  exact isCompatibleWith_reflexive.
+  exact isCompatibleWith_symmetric.
+  exact isCompatibleWith_transitive.
+Qed.
+
+(** Protocol versions are ordered. *)
 
 Module Ord : Orders.UsualOrderedType
   with Definition t := t.
@@ -17,6 +72,11 @@ Module Ord : Orders.UsualOrderedType
   Definition eq_refl  := @Logic.eq_refl t.
   Definition eq_sym   := @Logic.eq_sym t.
   Definition eq_trans := @Logic.eq_trans t.
+
+  (** For a protocol version _x_ to be _less than_ a protocol version _y_,
+      either the major version of _x_ is less than the major version of _y_,
+      or the major versions of _x_ and _y_ are equal and the minor version of
+      _x_ is less than the minor version of _y_. *)
 
   Definition lt (x y : t) : Prop :=
     major x < major y \/ (major x = major y /\ minor x < minor y).
@@ -120,6 +180,8 @@ Module Ord : Orders.UsualOrderedType
     }
   Qed.
 
+  (** Protocol versions have decidable equality. *)
+
   Definition eq_dec : forall x y : t, {x = y} + {x <> y}.
   Proof.
     destruct x as [xM xm].
@@ -138,37 +200,3 @@ Module Ord : Orders.UsualOrderedType
   Qed.
 
 End Ord.
-
-Definition isCompatibleWith (x y : t) : Prop :=
-  (major x) = (major y).
-
-Theorem isCompatibleWith_reflexive : forall x,
-  isCompatibleWith x x.
-Proof. intro x. apply eq_refl. Qed.
-
-Theorem isCompatibleWith_symmetric : forall x y,
-  isCompatibleWith x y -> isCompatibleWith y x.
-Proof.
-  intros x y Hxy.
-  apply eq_sym.
-  exact Hxy.
-Qed.
-
-Theorem isCompatibleWith_transitive : forall x y z,
-  isCompatibleWith x y -> isCompatibleWith y z -> isCompatibleWith x z.
-Proof.
-  unfold isCompatibleWith.
-  intros x y z Hxy Hyz.
-  rewrite Hxy.
-  exact Hyz.
-Qed.
-
-#[local]
-Instance isCompatibleWith_Eq : RelationClasses.Equivalence isCompatibleWith.
-Proof.
-  constructor.
-  exact isCompatibleWith_reflexive.
-  exact isCompatibleWith_symmetric.
-  exact isCompatibleWith_transitive.
-Qed.
-
