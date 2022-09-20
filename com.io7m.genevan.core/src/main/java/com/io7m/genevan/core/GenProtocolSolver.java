@@ -233,13 +233,16 @@ public final class GenProtocolSolver<
   {
     final var collected = new HashMap<String, HandlersForProtocol<C, S>>();
 
-    for (final var serverEndpoints : serverEndpointsByName.values()) {
-      final var protocolName = serverEndpoints.name;
+    for (final var entry : serverEndpointsByName.entrySet()) {
+      final var serverEndpoints =
+        entry.getValue();
+      final var protocolName =
+        entry.getKey();
 
       final var clientHandlers =
         clientHandlersByName.getOrDefault(
           protocolName,
-          new ClientHandlersByName<>(protocolName, new HashSet<>())
+          new ClientHandlersByName<>(new HashSet<>())
         );
 
       final var handlers =
@@ -256,13 +259,16 @@ public final class GenProtocolSolver<
       collected.put(protocolName, handlers);
     }
 
-    for (final var clientHandlers : clientHandlersByName.values()) {
-      final var protocolName = clientHandlers.name;
+    for (final var entry : clientHandlersByName.entrySet()) {
+      final var clientHandlers =
+        entry.getValue();
+      final var protocolName =
+        entry.getKey();
 
       final var serverEndpoints =
         serverEndpointsByName.getOrDefault(
           protocolName,
-          new ServerEndpointsByName<>(protocolName, new HashSet<>())
+          new ServerEndpointsByName<>(new HashSet<>())
         );
 
       final var handlers =
@@ -303,7 +309,7 @@ public final class GenProtocolSolver<
         supported.identifier();
       final var existing =
         collected.getOrDefault(
-          identifier, new ClientHandlersByName<>(identifier, new HashSet<>())
+          identifier, new ClientHandlersByName<>(new HashSet<>())
         );
 
       existing.clientHandlers.add(clientHandler);
@@ -335,7 +341,7 @@ public final class GenProtocolSolver<
         supported.identifier();
       final var existing =
         collected.getOrDefault(
-          identifier, new ServerEndpointsByName<>(identifier, new HashSet<>())
+          identifier, new ServerEndpointsByName<>(new HashSet<>())
         );
 
       existing.serverEndpoints.add(serverEndpoint);
@@ -550,23 +556,19 @@ public final class GenProtocolSolver<
   }
 
   private record ServerEndpointsByName<S extends GenProtocolServerEndpointType>(
-    String name,
     Set<S> serverEndpoints)
   {
     private ServerEndpointsByName
     {
-      Objects.requireNonNull(name, "name");
       Objects.requireNonNull(serverEndpoints, "serverEndpoints");
     }
   }
 
   private record ClientHandlersByName<C extends GenProtocolClientHandlerType>(
-    String name,
     Set<C> clientHandlers)
   {
     private ClientHandlersByName
     {
-      Objects.requireNonNull(name, "name");
       Objects.requireNonNull(clientHandlers, "clientHandlers");
     }
   }
