@@ -11,7 +11,7 @@
 
   <groupId>com.io7m.genevan</groupId>
   <artifactId>com.io7m.genevan</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.3-SNAPSHOT</version>
 
   <packaging>pom</packaging>
   <name>com.io7m.genevan</name>
