@@ -24,7 +24,7 @@
   </modules>
 
   <properties>
-    <com.io7m.xstructural.version>1.6.0</com.io7m.xstructural.version>
+    <com.io7m.xstructural.version>1.7.1</com.io7m.xstructural.version>
     <io7m.api.previousVersion>0.0.3-SNAPSHOT</io7m.api.previousVersion>
     <junit.version>5.9.0</junit.version>
     <logback.version>1.4.1</logback.version>
