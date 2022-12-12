@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.io7m.primogenitor</groupId>
     <artifactId>com.io7m.primogenitor.full</artifactId>
-    <version>7.4.0</version>
+    <version>7.5.0</version>
   </parent>
 
   <groupId>com.io7m.genevan</groupId>
@@ -24,7 +24,7 @@
   </modules>
 
   <properties>
-    <com.io7m.xstructural.version>1.7.1</com.io7m.xstructural.version>
+    <com.io7m.xstructural.version>1.7.2</com.io7m.xstructural.version>
     <io7m.api.previousVersion>0.0.3-SNAPSHOT</io7m.api.previousVersion>
     <junit.version>5.9.0</junit.version>
     <logback.version>1.4.1</logback.version>
@@ -133,7 +133,7 @@
       <dependency>
         <groupId>com.io7m.primogenitor</groupId>
         <artifactId>com.io7m.primogenitor.support</artifactId>
-        <version>7.4.0</version>
+        <version>7.5.0</version>
       </dependency>
       <dependency>
         <groupId>org.osgi</groupId>
