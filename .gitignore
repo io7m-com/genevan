@@ -11,3 +11,7 @@ bin
 out
 pom.xml.versionsBackup
 target
+.jqwik-database
+dependency-reduced-pom.xml
+pom.xml.versionsBackup
+com.io7m.genevan.core/src/main/coq/html

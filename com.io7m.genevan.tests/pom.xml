@@ -9,7 +9,7 @@
   <parent>
     <artifactId>com.io7m.genevan</artifactId>
     <groupId>com.io7m.genevan</groupId>
-    <version>0.0.2</version>
+    <version>1.0.0</version>
   </parent>
 
   <artifactId>com.io7m.genevan.tests</artifactId>
@@ -20,6 +20,7 @@
 
   <properties>
     <mdep.analyze.skip>true</mdep.analyze.skip>
+    <checkstyle.skip>true</checkstyle.skip>
   </properties>
 
   <dependencies>
@@ -73,6 +74,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <argLine>
+            ${argLine}
             --add-opens
             org.junit.platform.commons/org.junit.platform.commons.logging=ALL-UNNAMED
             --add-opens
