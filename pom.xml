@@ -32,7 +32,7 @@
     <com.io7m.xstructural.version>1.9.0</com.io7m.xstructural.version>
 
     <!-- Third-party dependencies. -->
-    <junit.version>5.11.2</junit.version>
+    <org.junit.version>5.11.2</org.junit.version>
     <logback.version>1.5.11</logback.version>
   </properties>
 
@@ -101,16 +101,15 @@
         <artifactId>com.io7m.junreachable.core</artifactId>
         <version>4.0.2</version>
       </dependency>
+
       <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-api</artifactId>
-        <version>${junit.version}</version>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${org.junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
-      <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-engine</artifactId>
-        <version>${junit.version}</version>
-      </dependency>
+
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
