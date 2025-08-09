@@ -31,7 +31,7 @@ The `genevan` package provides a simple generic version negotiation algorithm.
 * [JPMS-ready](https://en.wikipedia.org/wiki/Java_Platform_Module_System).
 * ISC license.
 
-## Description (Informal)
+## Informal Description
 
 A server provides a list of protocol names, and each protocol name has a list
 of supported version numbers. Call this list `ssp`.
@@ -65,7 +65,7 @@ communcation ends at this point with an error.
 At any point, if the client tries to send a protocol name and version that
 the server does not support, communication ends at that point with an error.
 
-## Description (Formal)
+## Formal Description
 
 A formal description of the protocol, including proofs of correctness, are
 provided in the given [Coq development](src/main/coq/genevan.v).
